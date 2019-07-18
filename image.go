@@ -12,6 +12,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -23,8 +24,17 @@ const (
 	otherIndex = 2
 )
 
+
 func main() {
-	fectchAll()
+	go syncHttp()
+	fmt.Printf("sleep now %s\n", time.Now())
+	time.Sleep(time.Second * 5)
+	fmt.Printf("run now %s\n", time.Now())
+
+	for i := 0;  i < 10;i++  {
+		go fetchGo("http://localhost:8000")
+
+	}
 }
 
 /**
@@ -97,7 +107,7 @@ func fectchAll() {
 		go fetch(url, ch) // launch a goroutine
 	}
 
-	for range os.Args[1:] {
+	for range os.Args[0:] {
 		fmt.Println(<-ch) //从通道ch接收
 	}
 	fmt.Printf("%.2fs elapsed\n", time.Since(start).Seconds())
@@ -120,4 +130,28 @@ func fetch(url string, ch chan<- string) {
 	secs := time.Since(start).Seconds()
 	ch <- fmt.Sprintf("%.2fs %7d %s", secs, nbytes, url)
 
+}
+
+func fetchGo(url string) {
+	_, _ = http.Get(url)
+}
+
+var mu sync.Mutex
+var count int
+
+func syncHttp() {
+	http.HandleFunc("/", handler)
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
+	mu.Lock()
+	count++
+	mu.Unlock()
+	_, _ = fmt.Fprintf(w, "URL.Path = %q\n", r.URL.Path)
+}
+
+func counter(w http.ResponseWriter, r *http.Request) {
+	mu.Lock()
+	_, _ = fmt.Fprintf(w, "Count %d\n", count)
+	mu.Unlock()
 }
