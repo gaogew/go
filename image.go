@@ -28,7 +28,7 @@ const (
 func main() {
 	go syncHttp()
 	fmt.Printf("sleep now %s\n", time.Now())
-	time.Sleep(time.Second * 5)
+	time.Sleep(time.Second * 3)
 	fmt.Printf("run now %s\n", time.Now())
 
 	for i := 0;  i < 10;i++  {
@@ -133,7 +133,10 @@ func fetch(url string, ch chan<- string) {
 }
 
 func fetchGo(url string) {
-	_, _ = http.Get(url)
+	_, err := http.Get(url)
+	if err != nil {
+		fmt.Printf("Error %q", err)
+	}
 }
 
 var mu sync.Mutex
@@ -147,11 +150,27 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
 	count++
 	mu.Unlock()
-	_, _ = fmt.Fprintf(w, "URL.Path = %q\n", r.URL.Path)
+	_, _ = fmt.Printf("URL.Path = %q\n", r.URL.Path)
 }
 
 func counter(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
 	_, _ = fmt.Fprintf(w, "Count %d\n", count)
 	mu.Unlock()
+}
+
+func handler2(w http.ResponseWriter, r *http.Request) {
+	_, _ = fmt.Fprintf(w, "%s %s %s\n", r.Method, r.URL, r.Proto)
+	for k, v := range r.Header {
+		_, _ = fmt.Fprintf(w, "Header[%s] = %q\n", k, v)
+	}
+	_, _ = fmt.Fprintf(w, "Host = %q\n", r.Host)
+	_, _ = fmt.Fprintf(w, "RemoteAddr = %q\n", r.RemoteAddr)
+	if err := r.ParseForm(); err != nil {
+		log.Print(err)
+	}
+	for k, v := range r.Form {
+		_, _ = fmt.Fprintf(w, "Form [%q] = %q\n", k, v)
+	}
+
 }
