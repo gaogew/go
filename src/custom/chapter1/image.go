@@ -1,4 +1,4 @@
-package main
+package chapter1
 
 import (
 	"fmt"
@@ -16,7 +16,10 @@ import (
 	"time"
 )
 
-var palette = []color.Color{color.RGBA{R: 2, G: 4, B: 1}, color.RGBA{R: 45, B: 12}, color.RGBA{A: 19, B: 12}}
+var palette = []color.Color{
+	color.White,
+	color.RGBA{R: 45, B: 12},
+	color.Black}
 
 const (
 	whiteIndex = 0
@@ -25,21 +28,49 @@ const (
 )
 
 func main() {
-	httpServer()
-	go syncHTTP()
-	fmt.Printf("sleep now %s\n", time.Now())
-	time.Sleep(time.Second * 3)
-	fmt.Printf("run now %s\n", time.Now())
+	ControlFlow()
+}
 
-	for i := 0; i < 10; i++ {
-		go fetchGo("http://localhost:8000")
+func ControlFlow() {
+	// switch
+	var heads int
+	tails := 0
+	// equals
+	switch os.Args[1] {
+	case "heads":
+		heads++
+	case "tails":
+		tails++
+	default:
+		fmt.Println("landed on edge!")
+	}
 
+	// func
+
+	fmt.Printf("%d %d", heads, tails)
+}
+func signum(x int) int {
+	//无标签选择，等价于 switch true
+	switch {
+	case x > 0:
+		return +1
+	case x < 0:
+		return -1
+	default:
+		return 0
 	}
 }
 
 /**
  * animation
  */
+
+func httpWithAnim() {
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		lissajous(w)
+	})
+	log.Fatal(http.ListenAndServe("localhost:8000", nil))
+}
 func animFunc() {
 	rand.Seed(time.Now().UTC().UnixNano())
 	if len(os.Args) > 1 && os.Args[1] == "web" {
@@ -131,28 +162,13 @@ func fetch(url string, ch chan<- string) {
 	ch <- fmt.Sprintf("%.2fs %7d %s", secs, nbytes, url)
 }
 
-func httpServer() {
-	http.HandleFunc("/", handler)
-	log.Fatal(http.ListenAndServe("localhost:8000", nil))
-}
-
-func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "URL.Path = %q\n", r.URL.Path)
-	fmt.Printf("result: %s, %s\n", r.Method, r.RemoteAddr)
-}
-
-func fetchGo(url string) {
-	_, err := http.Get(url)
-	if err != nil {
-		fmt.Printf("Error %q", err)
-	}
-}
-
 var mu sync.Mutex
 var count int
 
 func syncHTTP() {
 	http.HandleFunc("/", handler3)
+	http.HandleFunc("/count", counter)
+	log.Fatal(http.ListenAndServe("localhost:8000", nil))
 }
 
 func handler3(w http.ResponseWriter, r *http.Request) {
