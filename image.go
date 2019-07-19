@@ -12,6 +12,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -25,6 +26,15 @@ const (
 
 func main() {
 	httpServer()
+	go syncHTTP()
+	fmt.Printf("sleep now %s\n", time.Now())
+	time.Sleep(time.Second * 3)
+	fmt.Printf("run now %s\n", time.Now())
+
+	for i := 0; i < 10; i++ {
+		go fetchGo("http://localhost:8000")
+
+	}
 }
 
 /**
@@ -71,7 +81,7 @@ func lissajous(out io.Writer) {
 }
 
 // fetch url
-func fetchUrlFunc() {
+func fetchURLFunc() {
 	for _, url := range os.Args[1:] {
 		resp, err := http.Get(url)
 		if err != nil {
@@ -97,7 +107,7 @@ func fectchAll() {
 		go fetch(url, ch) // launch a goroutine
 	}
 
-	for range os.Args[1:] {
+	for range os.Args[0:] {
 		fmt.Println(<-ch) //从通道ch接收
 	}
 	fmt.Printf("%.2fs elapsed\n", time.Since(start).Seconds())
@@ -129,4 +139,47 @@ func httpServer() {
 func handler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "URL.Path = %q\n", r.URL.Path)
 	fmt.Printf("result: %s, %s\n", r.Method, r.RemoteAddr)
+}
+
+func fetchGo(url string) {
+	_, err := http.Get(url)
+	if err != nil {
+		fmt.Printf("Error %q", err)
+	}
+}
+
+var mu sync.Mutex
+var count int
+
+func syncHTTP() {
+	http.HandleFunc("/", handler3)
+}
+
+func handler3(w http.ResponseWriter, r *http.Request) {
+	mu.Lock()
+	count++
+	mu.Unlock()
+	_, _ = fmt.Printf("URL.Path = %q\n", r.URL.Path)
+}
+
+func counter(w http.ResponseWriter, r *http.Request) {
+	mu.Lock()
+	_, _ = fmt.Fprintf(w, "Count %d\n", count)
+	mu.Unlock()
+}
+
+func handler2(w http.ResponseWriter, r *http.Request) {
+	_, _ = fmt.Fprintf(w, "%s %s %s\n", r.Method, r.URL, r.Proto)
+	for k, v := range r.Header {
+		_, _ = fmt.Fprintf(w, "Header[%s] = %q\n", k, v)
+	}
+	_, _ = fmt.Fprintf(w, "Host = %q\n", r.Host)
+	_, _ = fmt.Fprintf(w, "RemoteAddr = %q\n", r.RemoteAddr)
+	if err := r.ParseForm(); err != nil {
+		log.Print(err)
+	}
+	for k, v := range r.Form {
+		_, _ = fmt.Fprintf(w, "Form [%q] = %q\n", k, v)
+	}
+
 }
