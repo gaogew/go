@@ -24,7 +24,7 @@ const (
 )
 
 func main() {
-	fectchAll()
+	httpServer()
 }
 
 /**
@@ -114,10 +114,19 @@ func fetch(url string, ch chan<- string) {
 	nbytes, err := io.Copy(ioutil.Discard, resp.Body)
 	_ = resp.Body.Close()
 	if err != nil {
-		ch <- fmt.Sprint("while reading %s: %v", url, err)
+		ch <- fmt.Sprintf("while reading %s: %v", url, err)
 		return
 	}
 	secs := time.Since(start).Seconds()
 	ch <- fmt.Sprintf("%.2fs %7d %s", secs, nbytes, url)
+}
 
+func httpServer() {
+	http.HandleFunc("/", handler)
+	log.Fatal(http.ListenAndServe("localhost:8000", nil))
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "URL.Path = %q\n", r.URL.Path)
+	fmt.Printf("result: %s, %s\n", r.Method, r.RemoteAddr)
 }

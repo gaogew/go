@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func main() {
+func test() {
 	var s, sep string
 	for i := 1; i < len(os.Args); i++ {
 		s += sep + os.Args[i]
@@ -80,11 +80,11 @@ func ioutilTest() {
 			continue
 		}
 
-		for _, line := range strings.Split(string(data), "\n")  {
+		for _, line := range strings.Split(string(data), "\n") {
 			counts[line]++
 		}
 
-		for line, n := range counts{
+		for line, n := range counts {
 			if n > 1 {
 				fmt.Printf("%d\t%s\n", n, line)
 			}
