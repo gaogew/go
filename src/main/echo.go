@@ -4,7 +4,6 @@ import (
 	"custom/chapter1"
 	"flag"
 	"fmt"
-	"log"
 	"strings"
 )
 type Fahrenheit float64
@@ -20,7 +19,7 @@ func main() {
 
 	fa := Fahrenheit(float64(2.02))
 	fmt.Println(fa)
-	log.Println(fa)
+	fmt.Println(fa)
 	fmt.Println(fa + 2.02)
 
 	// not support fmt.Println(fa == float64(2.02))

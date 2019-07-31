@@ -30,7 +30,9 @@ const (
 func main() {
 	ControlFlow()
 }
+func init() {
 
+}
 func ControlFlow() {
 	// switch
 	var heads int
